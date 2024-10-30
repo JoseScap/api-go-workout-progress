@@ -1,0 +1,9 @@
+---
+development:
+  dialect: postgres
+  database: workout-tracker-dev
+  user: postgres
+  password: local_password
+  host: 127.0.0.1
+  port: 5000
+  pool: 5
