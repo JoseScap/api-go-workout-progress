@@ -1,4 +1,4 @@
-module go-workout-progress
+module workout
 
 go 1.22.3
 

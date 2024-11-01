@@ -1,8 +1,8 @@
 package main
 
 import (
-	"go-workout-progress/infrastructure/routers"
 	"net/http"
+	"workout/infrastructure/routers"
 )
 
 func main() {
