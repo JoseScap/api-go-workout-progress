@@ -2,6 +2,7 @@ package routers
 
 import (
 	"encoding/json"
+	"github.com/gofrs/uuid"
 	"net/http"
 	"workout/domain/models"
 	"workout/infrastructure/database"
@@ -30,7 +31,23 @@ func ExerciseRouter() *chi.Mux {
 	})
 	r.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		idParam := chi.URLParam(r, "id")
-		w.Write([]byte("Get by id " + idParam))
+		id, err := uuid.FromString(idParam)
+		if err != nil {
+			http.Error(w, "Invalid id format", http.StatusBadRequest)
+			return
+		}
+
+		exercise := models.Exercise{}
+		if err := database.Connection.Find(&exercise, id); err != nil {
+			http.Error(w, "Exercise not found", http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(exercise); err != nil {
+			http.Error(w, "Failed to serialize exercise", http.StatusInternalServerError)
+			return
+		}
 	})
 	r.Put("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		idParam := chi.URLParam(r, "id")
