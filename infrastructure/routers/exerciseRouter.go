@@ -59,7 +59,25 @@ func ExerciseRouter() *chi.Mux {
 	})
 	r.Delete("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		idParam := chi.URLParam(r, "id")
-		w.Write([]byte("Delete by id " + idParam))
+		id, err := uuid.FromString(idParam)
+		if err != nil {
+			http.Error(w, "Invalid ID format", http.StatusBadRequest)
+			return
+		}
+
+		exercise := models.Exercise{}
+		if err := database.Connection.Find(&exercise, id); err != nil {
+			http.Error(w, "Exercise not found", http.StatusNotFound)
+			return
+		}
+
+		if err := database.Connection.Destroy(&exercise); err != nil {
+			http.Error(w, "Failed to delete exercise", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	})
+
 	return r
 }
