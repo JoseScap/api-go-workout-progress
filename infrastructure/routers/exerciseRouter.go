@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gofrs/uuid"
 	"net/http"
+	"workout/domain/dtos"
 	"workout/domain/models"
 	"workout/infrastructure/database"
 
@@ -27,7 +28,35 @@ func ExerciseRouter() *chi.Mux {
 	})
 
 	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Create"))
+		var req dtos.CreateExerciseRequest
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		if req.Name == "" || req.Metric == "" {
+			http.Error(w, "Name and Metric are required fields", http.StatusBadRequest)
+			return
+		}
+
+		exercise := models.Exercise{
+			ID:     uuid.Must(uuid.NewV4()),
+			Name:   req.Name,
+			Metric: req.Metric,
+		}
+
+		if err := database.Connection.Create(&exercise); err != nil {
+			http.Error(w, "Failed to create exercise", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		if err := json.NewEncoder(w).Encode(exercise); err != nil {
+			http.Error(w, "Failed to serialize response", http.StatusInternalServerError)
+			return
+		}
 	})
 	r.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		idParam := chi.URLParam(r, "id")
