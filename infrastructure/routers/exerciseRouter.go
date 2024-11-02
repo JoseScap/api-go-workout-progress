@@ -106,7 +106,7 @@ func ExerciseRouter() *chi.Mux {
 			return
 		}
 
-		if req.Name == "" || req.Metric == "" {
+		if req.Name == "s" || req.Metric == "" {
 			http.Error(w, "Name and Metric are required fields", http.StatusBadRequest)
 			return
 		}
