@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gofrs/uuid"
 	"net/http"
+	"time"
 	"workout/domain/dtos"
 	"workout/domain/models"
 	"workout/infrastructure/database"
@@ -130,7 +131,44 @@ func ExerciseRouter() *chi.Mux {
 	})
 	r.Patch("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		idParam := chi.URLParam(r, "id")
-		w.Write([]byte("Patch by id " + idParam))
+		id, err := uuid.FromString(idParam)
+		if err != nil {
+			http.Error(w, "Invalid ID format", http.StatusBadRequest)
+			return
+		}
+
+		exercise := models.Exercise{}
+		if err := database.Connection.Find(&exercise, id); err != nil {
+			if err := database.Connection.Find(&exercise, id); err != nil {
+				http.Error(w, "Exercise not found", http.StatusNotFound)
+				return
+			}
+		}
+
+		var req dtos.CreateExerciseRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		if req.Name != "" {
+			exercise.Name = req.Name
+		}
+		if req.Metric != "" {
+			exercise.Metric = req.Metric
+		}
+		exercise.UpdatedAt = time.Now()
+
+		if err := database.Connection.Update(&exercise); err != nil {
+			http.Error(w, "Failed to update exercise", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(exercise); err != nil {
+			http.Error(w, "Failed to serialize response", http.StatusInternalServerError)
+			return
+		}
 	})
 	r.Delete("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		idParam := chi.URLParam(r, "id")
