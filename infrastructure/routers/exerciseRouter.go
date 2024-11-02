@@ -4,22 +4,16 @@ import (
 	"encoding/json"
 	"net/http"
 	"workout/domain/models"
+	"workout/infrastructure/database"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/gobuffalo/pop/v6"
 )
 
 func ExerciseRouter() *chi.Mux {
 	r := chi.NewRouter()
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		tx, err := pop.Connect("development")
-		if err != nil {
-			http.Error(w, "Cannot access DB", http.StatusInternalServerError)
-			return
-		}
-
 		exercises := models.Exercises{}
-		if err := tx.All(&exercises); err != nil {
+		if err := database.Connection.All(&exercises); err != nil {
 			http.Error(w, "Cannot get exercises", http.StatusInternalServerError)
 			return
 		}
